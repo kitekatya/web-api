@@ -1,6 +1,3 @@
-using System.Reflection;
-using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -34,7 +31,9 @@ builder.Services.AddAutoMapper(cfg =>
 {
     cfg.CreateMap<UserEntity, UserDto>();
     cfg.CreateMap<UserPostDto, UserEntity>();
-}, Array.Empty<Assembly>());
+    cfg.CreateMap<UserUpdateDto, UserEntity>();
+    cfg.CreateMap<UserEntity, UserUpdateDto>();
+});
 
 var app = builder.Build();
 

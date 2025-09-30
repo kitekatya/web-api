@@ -2,7 +2,7 @@
 
 namespace WebApi.MinimalApi.Models;
 
-public class UserPutDto
+public class UserUpdateDto
 {
     [Required]
     [RegularExpression("^[0-9\\p{L}]*$", ErrorMessage = "Login should contain only letters or digits")]

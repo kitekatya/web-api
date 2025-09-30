@@ -1,7 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
-using AutoMapper;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using NUnit.Framework.Internal;
 using WebApi.MinimalApi.Domain;
 using WebApi.MinimalApi.Models;
 
@@ -40,12 +39,9 @@ public class UsersController : Controller
         if (user == null)
             return BadRequest();
 
-        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
-        {
-            ModelState.AddModelError("login", "Invalid login format");
-            return UnprocessableEntity(ModelState); 
-        }
-        
+        Validate(user);
+        if (!ModelState.IsValid)
+            return UnprocessableEntity(ModelState);
         
         var userEntity = mapper.Map<UserEntity>(user);
 
@@ -56,32 +52,68 @@ public class UsersController : Controller
             createdUserEntity.Id);
     }
 
-    [HttpPut]
-    [Consumes("application/json")]
-    public IActionResult UpdateUser([FromBody] UserPutDto? user, [FromRoute] Guid userId)
+    [HttpPut("{userId}")]
+    [Produces("application/json", "application/xml")]
+    public IActionResult UpdateUser([FromBody] UserUpdateDto? user, [FromRoute] Guid userId)
     {
-        if (user == null)
+        if (user == null || userId == Guid.Empty)
             return BadRequest();
 
-        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
-        {
-            ModelState.AddModelError("login", "Invalid login format");
-            return UnprocessableEntity(ModelState); 
-        }
-
-        if (string.IsNullOrEmpty(user.FirstName) || string.IsNullOrEmpty(user.LastName))
-        {
-            ModelState.AddModelError("name", "Invalid name format");
+        Validate(user);
+        if (!ModelState.IsValid)
             return UnprocessableEntity(ModelState);
-        }
         
-        var userEntity = mapper.Map<UserEntity>(user);
-
+        var userEntity = mapper.Map(user, new UserEntity(userId));
         userRepository.UpdateOrInsert(userEntity, out var isInserted);
-        return CreatedAtRoute(
-            nameof(GetUserById),
-            new { userId },
-            userId);
+        if (isInserted)
+        {
+            return CreatedAtAction(
+                actionName: nameof(GetUserById),
+                routeValues: new { userId },
+                value: userId);
+        }
 
+        return NoContent();
+    }
+    
+    [HttpPatch("{userId:guid}")]
+    [Produces("application/json", "application/xml")]
+    public IActionResult PartialUpdateUser([FromRoute] Guid userId, [FromBody] JsonPatchDocument<UserUpdateDto> patchDoc)
+    {
+        if (patchDoc == null)
+            return BadRequest();
+
+        var existingUser = userRepository.FindById(userId);
+        if (existingUser == null || userId == Guid.Empty)
+            return NotFound();
+        
+        var userToUpdate = mapper.Map<UserUpdateDto>(existingUser);
+        patchDoc.ApplyTo(userToUpdate, ModelState);
+        Validate(userToUpdate);
+        if (!ModelState.IsValid)
+            return UnprocessableEntity(ModelState);
+
+        var entity = mapper.Map<UserEntity>(userToUpdate);
+        userRepository.Update(entity);
+        
+        return NoContent();
+    }
+
+    private void Validate(UserUpdateDto user)
+    {
+        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
+            ModelState.AddModelError("login", "Invalid login format");
+        
+        if (string.IsNullOrEmpty(user.FirstName))
+            ModelState.AddModelError("firstName", "Invalid name format");
+        
+        if (string.IsNullOrEmpty(user.LastName))
+            ModelState.AddModelError("lastName", "Invalid name format");
+    }
+
+    private void Validate(UserPostDto user)
+    {
+        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
+            ModelState.AddModelError("login", "Invalid login format");
     }
 }
