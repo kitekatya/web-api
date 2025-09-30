@@ -34,7 +34,7 @@ public class UsersController : Controller
 
 
     [HttpPost]
-    [Consumes("application/json")]
+    [Produces("application/json", "application/xml")]
     public IActionResult CreateUser([FromBody] UserPostDto? user)
     {
         if (user == null)
@@ -43,8 +43,9 @@ public class UsersController : Controller
         if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
         {
             ModelState.AddModelError("login", "Invalid login format");
-            return UnprocessableEntity(ModelState);
+            return UnprocessableEntity(ModelState); 
         }
+        
         
         var userEntity = mapper.Map<UserEntity>(user);
 
