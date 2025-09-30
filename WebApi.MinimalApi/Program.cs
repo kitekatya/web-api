@@ -30,7 +30,7 @@ builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.CreateMap<UserEntity, UserDto>();
-    cfg.CreateMap<UserPostDto, UserEntity>();
+    cfg.CreateMap<UserCreateDto, UserEntity>();
     cfg.CreateMap<UserUpdateDto, UserEntity>();
     cfg.CreateMap<UserEntity, UserUpdateDto>();
 });

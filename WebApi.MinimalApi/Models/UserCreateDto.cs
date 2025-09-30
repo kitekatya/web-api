@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WebApi.MinimalApi.Models;
 
-public class UserPostDto
+public class UserCreateDto
 {
     [Required]
     public string? Login { get; set; }

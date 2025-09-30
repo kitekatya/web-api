@@ -14,7 +14,6 @@ public class UsersController : Controller
     private readonly IUserRepository userRepository;
     private readonly IMapper mapper;
     private readonly LinkGenerator linkGenerator;
-    // Чтобы ASP.NET положил что-то в userRepository требуется конфигурация
 
     public UsersController(IUserRepository userRepository, IMapper mapper, LinkGenerator linkGenerator)
     {
@@ -37,7 +36,7 @@ public class UsersController : Controller
 
     [HttpPost]
     [Produces("application/json", "application/xml")]
-    public IActionResult CreateUser([FromBody] UserPostDto? user)
+    public IActionResult CreateUser([FromBody] UserCreateDto? user)
     {
         if (user == null)
             return BadRequest();
@@ -69,17 +68,15 @@ public class UsersController : Controller
         var userEntity = mapper.Map(user, new UserEntity(userId));
         userRepository.UpdateOrInsert(userEntity, out var isInserted);
         if (isInserted)
-        {
             return CreatedAtAction(
                 actionName: nameof(GetUserById),
                 routeValues: new { userId },
                 value: userId);
-        }
 
         return NoContent();
     }
     
-    [HttpPatch("{userId:guid}")]
+    [HttpPatch("{userId}")]
     [Produces("application/json", "application/xml")]
     public IActionResult PartialUpdateUser([FromRoute] Guid userId, [FromBody] JsonPatchDocument<UserUpdateDto> patchDoc)
     {
@@ -115,26 +112,8 @@ public class UsersController : Controller
         return NoContent();
     }
     
-    private void Validate(UserUpdateDto user)
-    {
-        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
-            ModelState.AddModelError("login", "Invalid login format");
-        
-        if (string.IsNullOrEmpty(user.FirstName))
-            ModelState.AddModelError("firstName", "Invalid name format");
-        
-        if (string.IsNullOrEmpty(user.LastName))
-            ModelState.AddModelError("lastName", "Invalid name format");
-    }
-
-    private void Validate(UserPostDto user)
-    {
-        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
-            ModelState.AddModelError("login", "Invalid login format");
-    }
-    
     [HttpHead("{userId}")]
-    [Produces("application/json", "application/xml")]
+    [Produces("application/json")]
     public IActionResult HeadUserById([FromRoute] Guid userId)
     {
         var user = userRepository.FindById(userId);
@@ -179,5 +158,30 @@ public class UsersController : Controller
         Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationHeader));
         var users = mapper.Map<IEnumerable<UserDto>>(pageList);
         return Ok(users);
+    }
+    
+    [HttpOptions]
+    public IActionResult GetOptions()
+    {
+        Response.Headers.Append("Allow", "GET, POST, OPTIONS");
+        return Ok();
+    }
+    
+    private void Validate(UserUpdateDto user)
+    {
+        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
+            ModelState.AddModelError("login", "Invalid login format");
+        
+        if (string.IsNullOrEmpty(user.FirstName))
+            ModelState.AddModelError("firstName", "Invalid name format");
+        
+        if (string.IsNullOrEmpty(user.LastName))
+            ModelState.AddModelError("lastName", "Invalid name format");
+    }
+
+    private void Validate(UserCreateDto user)
+    {
+        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
+            ModelState.AddModelError("login", "Invalid login format");
     }
 }
