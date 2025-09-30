@@ -1,5 +1,7 @@
-﻿using AutoMapper;
+﻿using System.ComponentModel.DataAnnotations;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using NUnit.Framework.Internal;
 using WebApi.MinimalApi.Domain;
 using WebApi.MinimalApi.Models;
 
@@ -12,7 +14,7 @@ public class UsersController : Controller
     private readonly IUserRepository userRepository;
     private readonly IMapper mapper;
     // Чтобы ASP.NET положил что-то в userRepository требуется конфигурация
-    
+
     public UsersController(IUserRepository userRepository, IMapper mapper)
     {
         this.mapper = mapper;
@@ -20,7 +22,7 @@ public class UsersController : Controller
     }
 
     [Produces("application/json", "application/xml")]
-    [HttpGet("{userId}")]
+    [HttpGet("{userId}", Name = nameof(GetUserById))]
     public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
     {
         var user = userRepository.FindById(userId);
@@ -30,9 +32,26 @@ public class UsersController : Controller
         return Ok(userDto);
     }
 
+
     [HttpPost]
-    public IActionResult CreateUser([FromBody] object user)
+    [Consumes("application/json")]
+    public IActionResult CreateUser([FromBody] UserPostDto user)
     {
-        throw new NotImplementedException();
+        if (user == null)
+            return BadRequest();
+
+        if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
+        {
+            ModelState.AddModelError("login", "Invalid login format");
+            return UnprocessableEntity(ModelState);
+        }
+        
+        var userEntity = mapper.Map<UserEntity>(user);
+
+        var createdUserEntity = userRepository.Insert(userEntity);
+        return CreatedAtRoute(
+            nameof(GetUserById),
+            new { userId = createdUserEntity.Id },
+            createdUserEntity.Id);
     }
 }

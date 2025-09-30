@@ -1,5 +1,8 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using WebApi.MinimalApi.Domain;
+using WebApi.MinimalApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://localhost:5000");
@@ -19,7 +22,14 @@ builder.Services.AddControllers(options =>
     });
 
 
+
+
 builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.CreateMap<UserEntity, UserDto>();
+    cfg.CreateMap<UserPostDto, UserEntity>();
+});
 
 var app = builder.Build();
 
