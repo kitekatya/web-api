@@ -129,4 +129,16 @@ public class UsersController : Controller
         if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
             ModelState.AddModelError("login", "Invalid login format");
     }
+    
+    [HttpHead("{userId}")]
+    [Produces("application/json", "application/xml")]
+    public IActionResult HeadUserById([FromRoute] Guid userId)
+    {
+        var user = userRepository.FindById(userId);
+        if (user is null)
+            return NotFound();
+
+        Response.ContentType = "application/json; charset=utf-8";
+        return Ok();
+    }
 }
