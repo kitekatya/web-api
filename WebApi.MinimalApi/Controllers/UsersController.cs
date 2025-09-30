@@ -35,7 +35,7 @@ public class UsersController : Controller
 
     [HttpPost]
     [Consumes("application/json")]
-    public IActionResult CreateUser([FromBody] UserPostDto user)
+    public IActionResult CreateUser([FromBody] UserPostDto? user)
     {
         if (user == null)
             return BadRequest();

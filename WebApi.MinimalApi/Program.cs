@@ -15,6 +15,7 @@ builder.Services.AddControllers(options =>
         // Эта настройка приводит к игнорированию заголовка Accept, когда он содержит */*
         // Здесь она нужна, чтобы в этом случае ответ возвращался в формате JSON
         options.RespectBrowserAcceptHeader = true;
+        options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
     })
     .ConfigureApiBehaviorOptions(options => {
         options.SuppressModelStateInvalidFilter = true;
