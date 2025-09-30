@@ -99,6 +99,19 @@ public class UsersController : Controller
         return NoContent();
     }
 
+    [HttpDelete("{userId:guid}")]
+    [Produces("application/json", "application/xml")]
+    public IActionResult DeleteUser([FromRoute] Guid userId)
+    {
+        if (userId == Guid.Empty)
+            return BadRequest();
+        if (userRepository.FindById(userId) is null)
+            return NotFound();
+        
+        userRepository.Delete(userId);
+        return NoContent();
+    }
+    
     private void Validate(UserUpdateDto user)
     {
         if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
