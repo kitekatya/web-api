@@ -66,11 +66,22 @@ public class UsersController : Controller
         if (string.IsNullOrEmpty(user.Login) || !user.Login.All(char.IsLetterOrDigit))
         {
             ModelState.AddModelError("login", "Invalid login format");
+            return UnprocessableEntity(ModelState); 
+        }
+
+        if (string.IsNullOrEmpty(user.FirstName) || string.IsNullOrEmpty(user.LastName))
+        {
+            ModelState.AddModelError("name", "Invalid name format");
             return UnprocessableEntity(ModelState);
         }
         
         var userEntity = mapper.Map<UserEntity>(user);
 
-        userRepository.UpdateOrInsert();
+        userRepository.UpdateOrInsert(userEntity, out var isInserted);
+        return CreatedAtRoute(
+            nameof(GetUserById),
+            new { userId },
+            userId);
+
     }
 }
